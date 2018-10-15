@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:util="http://www.springframework.org/schema/util" xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+     http://www.springframework.org/schema/beans/spring-beans.xsd
+     http://www.springframework.org/schema/context
+     http://www.springframework.org/schema/context/spring-context.xsd
+     http://www.springframework.org/schema/util
+     http://www.springframework.org/schema/util/spring-util.xsd
+     http://www.springframework.org/schema/aop
+     http://www.springframework.org/schema/aop/spring-aop.xsd
+     http://www.springframework.org/schema/mvc   
+     http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+	<!--上线配置拦截-->
+	<!--<mvc:interceptors>-->
+		<!--<mvc:interceptor>-->
+			<!--&lt;!&ndash; 匹配的是url路径， 如果不配置或/**,将拦截所有的Controller &ndash;&gt;-->
+			<!--<mvc:mapping path="/**" />-->
+			<!--<bean class="com.rv.service.impl.AccessFilter"></bean>-->
+		<!--</mvc:interceptor>-->
+		<!--&lt;!&ndash; 当设置多个拦截器时，先按顺序调用preHandle方法，然后逆序调用每个拦截器的postHandle和afterCompletion方法 &ndash;&gt;-->
+	<!--</mvc:interceptors>-->
+
+	<context:property-placeholder location="classpath*:config.properties"
+		ignore-unresolvable="true" />
+	<!-- <mvc:annotation-driven conversion-service="conversionServiceFactoryBean" /> -->
+	<context:component-scan base-package="com.hydra.api"></context:component-scan>
+	<context:component-scan base-package="com.hydra.web"></context:component-scan>
+	<aop:aspectj-autoproxy proxy-target-class="true" expose-proxy="true"></aop:aspectj-autoproxy>
+	<bean id="conversionServiceFactoryBean" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+		<property name="converters">
+			<list>
+				<bean class="com.hydra.common.converter.DateConvert"></bean>
+			</list>
+		</property>
+	</bean>
+	<!-- ViewResolver视图解析器 用于将返回的ModelAndView对象进行分离 ： -->
+	<bean class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="viewClass"
+			value="org.springframework.web.servlet.view.JstlView"></property>
+		<property name="prefix" value="/WEB-INF/"></property>
+		<property name="suffix" value=".jsp"></property>
+	</bean>
+
+	<bean id="objectMapper" class="com.hydra.utils.JsonObjectMapper">
+		<constructor-arg name="inclusion">
+			<value type="org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion">
+				ALWAYS
+			</value>
+		</constructor-arg>
+	</bean>
+
+	<util:list id="messageConverters">
+		<bean id="jsonHttpMessageConverter"
+			class="org.springframework.http.converter.json.MappingJacksonHttpMessageConverter">
+			<property name="objectMapper" ref="objectMapper"></property>
+		</bean>
+		<bean id="formHttpMessageConverter"
+			class="org.springframework.http.converter.FormHttpMessageConverter"></bean>
+	</util:list>
+
+
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver">
+		<property name="messageConverters" ref="messageConverters" />
+	</bean>
+
+	<bean class="com.hydra.spring.util.CustomRequestMappingHandlerMapping">
+	</bean>
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="messageConverters" ref="messageConverters" />
+	</bean>
+</beans>
